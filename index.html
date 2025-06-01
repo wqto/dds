@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インタラクティブ解説：腸と脳のふしぎな関係</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Visualization & Content Choices: 
+    1. Brain-Gut Axis (Report Table 1): Goal: Organize/Inform. Method: Interactive HTML/CSS diagram. Interaction: Click to reveal details. Justification: More engaging than a static table, promotes active learning. Library: Vanilla JS.
+    2. ADHD Gut Comparison: Goal: Compare. Method: Side-by-side bar charts. Interaction: Tooltips provide data on hover. Justification: Visually quantifies the abstract concept of dysbiosis, making it more concrete. Library: Chart.js.
+    3. FMT Applications (Report Table 2): Goal: Organize/Compare. Method: Filterable cards. Interaction: Buttons filter cards by treatment status (Established/Experimental). Justification: A modern, interactive way to explore data that is more user-friendly than a static table. Library: Vanilla JS.
+    All choices prioritize interaction and visual clarity to support the narrative structure and enhance user understanding. -->
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #FDFCF8;
+            color: #3a3a3a;
+        }
+        .bg-base { background-color: #FDFCF8; }
+        .bg-surface { background-color: #FFFFFF; }
+        .bg-primary { background-color: #6a8e9e; }
+        .text-primary { color: #6a8e9e; }
+        .border-primary { border-color: #6a8e9e; }
+        .bg-secondary { background-color: #5b8266; }
+        .text-secondary { color: #5b8266; }
+        .bg-accent { background-color: #e9e3d5; }
+        .text-accent { color: #b8a993; }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 640px) {
+            .chart-container {
+                height: 380px;
+            }
+        }
+        .section-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            line-height: 1.3;
+            text-align: center;
+        }
+        .section-subtitle {
+            font-size: 1.125rem;
+            text-align: center;
+            color: #6b7280;
+            margin-top: 1rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .nav-link {
+            transition: color 0.3s ease;
+        }
+        .nav-link.active {
+            color: #6a8e9e;
+            font-weight: 700;
+        }
+        .interactive-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .interactive-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .details-content {
+            display: none;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-base">
+
+    <header class="bg-surface/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="text-xl font-bold text-secondary">🧠 腸と脳の研究所 🌿</div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#connection" class="nav-link text-gray-700 hover:text-primary">脳腸相関</a>
+                <a href="#mood" class="nav-link text-gray-700 hover:text-primary">気分と性格</a>
+                <a href="#adhd" class="nav-link text-gray-700 hover:text-primary">ADHD</a>
+                <a href="#fmt" class="nav-link text-gray-700 hover:text-primary">腸内移植</a>
+                <a href="#action" class="nav-link text-gray-700 hover:text-primary">腸活</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-gray-700 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#connection" class="block py-2 px-4 text-sm text-gray-700 hover:bg-accent">脳腸相関</a>
+            <a href="#mood" class="block py-2 px-4 text-sm text-gray-700 hover:bg-accent">気分と性格</a>
+            <a href="#adhd" class="block py-2 px-4 text-sm text-gray-700 hover:bg-accent">ADHD</a>
+            <a href="#fmt" class="block py-2 px-4 text-sm text-gray-700 hover:bg-accent">腸内移植</a>
+            <a href="#action" class="block py-2 px-4 text-sm text-gray-700 hover:bg-accent">腸活</a>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero" class="py-20 bg-accent">
+            <div class="container mx-auto px-6 text-center">
+                <h1 class="text-4xl md:text-6xl font-bold text-secondary">腸は、第二の脳。</h1>
+                <p class="mt-4 text-lg md:text-xl text-gray-700 max-w-3xl mx-auto">腸内環境が、性格や気分、集中力にまで影響しているって知ってた？最新科学が解き明かす、脳と腸のふしぎな会話を一緒に探検しよう。</p>
+            </div>
+        </section>
+
+        <section id="connection" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                <h2 class="section-title text-secondary">脳と腸の「超」つながり！</h2>
+                <p class="section-subtitle">脳と腸は、お互いに情報を交換し合う「脳腸相関」という深い関係にあります。腸は「第二の脳」とも呼ばれ、様々な方法で脳とコミュニケーションを取っています。下のカードをクリックして、その驚くべき仕組みを見てみましょう。</p>
+                
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" id="connection-cards">
+                </div>
+            </div>
+        </section>
+
+        <section id="mood" class="py-16 md:py-24 bg-accent">
+            <div class="container mx-auto px-6">
+                <h2 class="section-title text-secondary">腸が「気分」を左右する</h2>
+                <p class="section-subtitle">「腸活」という言葉を聞いたことがありますか？腸内環境を整えることは、お腹の調子だけでなく、心の健康にも繋がります。善玉菌が優勢な腸は、私たちをポジティブでストレスに強い状態にしてくれるのです。</p>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="bg-surface p-8 rounded-xl shadow-lg">
+                        <h3 class="text-2xl font-bold text-primary mb-4">ストレスと腸の悪循環</h3>
+                        <p class="text-gray-600 mb-6">強いストレスは腸内環境を乱し、乱れた腸はさらにストレスを感じやすくさせるという悪循環に陥ることがあります。このサイクルを断ち切る鍵は、腸内細菌のバランスを整えることです。</p>
+                        <div class="flex justify-around items-center text-center">
+                            <div class="w-1/3">
+                                <div class="text-4xl">🧠</div>
+                                <p class="mt-2 font-bold">ストレス</p>
+                            </div>
+                            <div class="text-2xl font-bold text-accent">→</div>
+                            <div class="w-1/3">
+                                <div class="text-4xl">🦠</div>
+                                <p class="mt-2 font-bold">腸の乱れ</p>
+                            </div>
+                            <div class="text-2xl font-bold text-accent">→</div>
+                             <div class="w-1/3">
+                                <div class="text-4xl">😥</div>
+                                <p class="mt-2 font-bold">さらにストレス</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-surface p-8 rounded-xl shadow-lg">
+                        <h3 class="text-2xl font-bold text-primary mb-4">幸せホルモン「セロトニン」</h3>
+                        <p class="text-gray-600 mb-2">気分の安定に欠かせないセロトニンの、なんと約90%は腸で作られています。腸内環境が良いとセロトニンの生産が活発になり、心が穏やかになります。</p>
+                        <div class="relative pt-1">
+                            <div class="flex mb-2 items-center justify-between">
+                                <div><span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-white bg-secondary">腸の元気度</span></div>
+                                <div class="text-right"><span class="text-xs font-semibold inline-block text-secondary">90%</span></div>
+                            </div>
+                            <div class="overflow-hidden h-4 mb-4 text-xs flex rounded bg-accent">
+                                <div style="width:90%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-secondary"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="adhd" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                <h2 class="section-title text-secondary">ADHDと腸内環境の意外な関係</h2>
+                <p class="section-subtitle">注意欠陥・多動性障害（ADHD）は、脳の機能的な特性と考えられてきましたが、近年の研究で腸内環境との深い関連が明らかになってきました。ADHDを持つ人の腸内細菌には、特有のパターンが見られることが報告されています。</p>
+                <div class="mt-12">
+                    <div class="chart-container">
+                        <canvas id="adhdChart"></canvas>
+                    </div>
+                     <p class="text-center text-sm text-gray-500 mt-4">このグラフは、ADHDと関連する腸内環境の傾向を模式的に示したものです。ADHDを持つ人では、腸内細菌の多様性が低下し、炎症を引き起こす可能性のある細菌が増加する傾向が報告されています。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="fmt" class="py-16 md:py-24 bg-accent">
+            <div class="container mx-auto px-6">
+                <h2 class="section-title text-secondary">未来の治療？「腸内細菌移植」</h2>
+                <p class="section-subtitle">腸内細菌移植（FMT）は、健康な人の便に含まれる腸内細菌を患者に移植する最先端の治療法です。特定の腸の病気には既に高い効果が認められており、心の健康やADHDへの応用も研究されています。</p>
+                <div class="mt-8 mb-8 flex justify-center space-x-4">
+                    <button class="fmt-filter-btn active bg-secondary text-white py-2 px-6 rounded-full" data-filter="all">すべて</button>
+                    <button class="fmt-filter-btn bg-white text-secondary py-2 px-6 rounded-full" data-filter="established">確立された治療</button>
+                    <button class="fmt-filter-btn bg-white text-secondary py-2 px-6 rounded-full" data-filter="experimental">研究中の応用</button>
+                </div>
+                <div id="fmt-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+            </div>
+        </section>
+
+        <section id="action" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                <h2 class="section-title text-secondary">今日からできる「腸活」</h2>
+                <p class="section-subtitle">腸内環境を整えることは、特別なことではありません。日々の小さな心がけが、君の心と体を元気にします。３つのポイントを意識して、腸を大切にする生活を始めてみませんか？</p>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                    <div class="bg-surface p-8 rounded-xl shadow-lg">
+                        <div class="text-5xl mb-4">🥗</div>
+                        <h3 class="text-2xl font-bold text-primary mb-2">バランスの良い食事</h3>
+                        <p class="text-gray-600">野菜や果物、発酵食品をたくさん食べよう。善玉菌が喜ぶエサ（食物繊維）をたっぷり摂ることが大切。</p>
+                    </div>
+                    <div class="bg-surface p-8 rounded-xl shadow-lg">
+                        <div class="text-5xl mb-4">🏃‍♂️</div>
+                        <h3 class="text-2xl font-bold text-primary mb-2">適度な運動</h3>
+                        <p class="text-gray-600">体を動かすと腸の動きも活発に。ウォーキングなど、続けやすい運動から始めてみよう。</p>
+                    </div>
+                    <div class="bg-surface p-8 rounded-xl shadow-lg">
+                        <div class="text-5xl mb-4">😴</div>
+                        <h3 class="text-2xl font-bold text-primary mb-2">良い睡眠とストレス管理</h3>
+                        <p class="text-gray-600">しっかり寝て、リラックスする時間を作ろう。ストレスは腸の大敵。自分なりの解消法を見つけよう。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p>&copy; 2025 腸と脳の研究所. All Rights Reserved.</p>
+            <p class="text-sm mt-2 text-gray-400">このページは教育目的で作成されたものであり、医学的アドバイスに代わるものではありません。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            const navLinks = document.querySelectorAll('.nav-link, #mobile-menu a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (!mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            const sections = document.querySelectorAll('section');
+            const headerNavLinks = document.querySelectorAll('header .nav-link');
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 100) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                headerNavLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+            const connectionData = [
+                {
+                    title: '① 迷走神経',
+                    icon: '🧠',
+                    description: '脳と腸を直接つなぐ「高速道路」のような神経。ストレスなどの脳からの信号を腸に伝え、逆に腸の状態を脳に伝えます。腸内細菌がこの神経を刺激することもあります。',
+                },
+                {
+                    title: '② ホルモン',
+                    icon: '💌',
+                    description: '気分を安定させる「幸せホルモン」セロトニンの約90%は腸で作られます。腸内細菌がその生産を助け、血液に乗って脳にメッセージを送ります。',
+                },
+                {
+                    title: '③ 免疫システム',
+                    icon: '🛡️',
+                    description: '体の免疫細胞の約70%は腸に集中しています。腸内環境が乱れると、免疫が異常に働き、脳にまで炎症が及んでしまうことがあります。',
+                },
+                {
+                    title: '④ 腸内細菌が作る物質',
+                    icon: '⚗️',
+                    description: '腸内細菌は、食物繊維などをエサに「短鎖脂肪酸」など体によい物質を作ります。これらは脳の炎症を抑えたり、脳の働きを助けたりします。',
+                },
+            ];
+
+            const connectionCardsContainer = document.getElementById('connection-cards');
+            connectionData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'interactive-card bg-surface p-6 rounded-xl shadow-lg';
+                card.innerHTML = `
+                    <div class="flex items-center mb-4">
+                        <div class="text-4xl mr-4">${item.icon}</div>
+                        <h3 class="text-2xl font-bold text-primary">${item.title}</h3>
+                    </div>
+                    <p class="text-gray-600">${item.description.substring(0, 50)}...</p>
+                    <div class="details-content mt-4 text-gray-600 text-sm">
+                        <p>${item.description}</p>
+                    </div>
+                `;
+                connectionCardsContainer.appendChild(card);
+            });
+            
+            connectionCardsContainer.addEventListener('click', (e) => {
+                const card = e.target.closest('.interactive-card');
+                if (card) {
+                    const content = card.querySelector('.details-content');
+                    const fullText = card.querySelector('.details-content p').textContent;
+                    const summaryText = card.querySelector('p:not(.details-content p)');
+
+                    if (content.style.display === 'block') {
+                        content.style.maxHeight = null;
+                        setTimeout(() => { 
+                            content.style.display = 'none';
+                            summaryText.textContent = `${fullText.substring(0, 50)}...`;
+                         }, 500);
+                    } else {
+                        summaryText.textContent = '';
+                        content.style.display = 'block';
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                    }
+                }
+            });
+
+            const adhdCtx = document.getElementById('adhdChart').getContext('2d');
+            new Chart(adhdCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['細菌の多様性', '善玉菌 (例: Faecalibacterium)', '炎症関連菌 (例: Ruminococcus)'],
+                    datasets: [
+                        {
+                            label: '健康的な腸の傾向',
+                            data: [90, 80, 20],
+                            backgroundColor: 'rgba(91, 130, 102, 0.6)',
+                            borderColor: 'rgba(91, 130, 102, 1)',
+                            borderWidth: 1,
+                        },
+                        {
+                            label: 'ADHDと関連する腸の傾向',
+                            data: [50, 40, 60],
+                            backgroundColor: 'rgba(233, 227, 213, 0.8)',
+                            borderColor: 'rgba(184, 169, 147, 1)',
+                            borderWidth: 1,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                             ticks: {
+                                callback: function(value) {
+                                    return value + '%'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y + ' (相対値)';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const fmtData = [
+                { name: 'C. diff 感染症', category: 'established', description: '抗生物質が効きにくい難治性の腸の感染症。FMTの高い効果が認められ、標準的な治療法として推奨されています。' },
+                { name: '潰瘍性大腸炎', category: 'experimental', description: '大腸に炎症が起きる病気。FMTの効果が期待され、臨床試験が進行中です。' },
+                { name: 'クローン病', category: 'experimental', description: '消化管の様々な場所に炎症が起きる病気。応用が研究されています。' },
+                { name: '過敏性腸症候群 (IBS)', category: 'experimental', description: 'お腹の痛みや不快感、便通異常が続く状態。FMTが症状を改善する可能性が研究されています。' },
+                { name: '自閉スペクトラム症 (ASD)', category: 'experimental', description: '社会的なコミュニケーションの困難さなどを特徴とする発達障害。消化器症状を伴うことが多く、FMTの研究が進められています。' },
+                { name: 'ADHD', category: 'experimental', description: 'FMTがADHD症状に影響を与える可能性が示唆されていますが、研究はまだ非常に初期段階です。' },
+                { name: 'うつ病・不安症', category: 'experimental', description: '心の健康に対するFMTの応用研究は世界中で注目されていますが、まだ実験的な段階です。' },
+                { name: '肥満・メタボ', category: 'experimental', description: '腸内細菌が代謝に関わることから、肥満などへの応用も研究されています。' },
+                { name: '各種アレルギー', category: 'experimental', description: '免疫と腸の関わりから、アトピーや食物アレルギーなどへの効果が期待されています。' },
+            ];
+
+            const fmtContainer = document.getElementById('fmt-cards-container');
+            const filterButtons = document.querySelectorAll('.fmt-filter-btn');
+
+            const renderFmtCards = (filter) => {
+                fmtContainer.innerHTML = '';
+                const filteredData = fmtData.filter(item => filter === 'all' || item.category === filter);
+                
+                filteredData.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = `fmt-card bg-surface p-6 rounded-xl shadow-md transition-opacity duration-300`;
+                    const badgeColor = item.category === 'established' ? 'bg-secondary' : 'bg-yellow-500';
+                    const badgeText = item.category === 'established' ? '確立された治療' : '研究中の応用';
+                    
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                             <h3 class="text-xl font-bold text-primary mb-2 pr-2">${item.name}</h3>
+                             <span class="text-xs font-semibold text-white ${badgeColor} py-1 px-2 rounded-full whitespace-nowrap">${badgeText}</span>
+                        </div>
+                        <p class="text-gray-600 text-sm">${item.description}</p>
+                    `;
+                    fmtContainer.appendChild(card);
+                });
+            };
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    filterButtons.forEach(btn => {
+                        btn.classList.remove('active', 'bg-secondary', 'text-white');
+                        btn.classList.add('bg-white', 'text-secondary');
+                    });
+                    button.classList.add('active', 'bg-secondary', 'text-white');
+                    button.classList.remove('bg-white', 'text-secondary');
+                    renderFmtCards(button.dataset.filter);
+                });
+            });
+
+            renderFmtCards('all');
+        });
+    </script>
+</body>
+</html>
